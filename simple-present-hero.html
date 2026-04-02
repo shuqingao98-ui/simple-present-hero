@@ -117,6 +117,17 @@ body {
   100% { transform: scaleX(-1); filter: brightness(1); }
 }
 
+.hero.hurt {
+  animation: heroHurt 0.4s ease-out;
+}
+@keyframes heroHurt {
+  0% { transform: translateX(0); filter: brightness(1); }
+  25% { transform: translateX(10px); filter: brightness(2) sepia(1) hue-rotate(-50deg) saturate(3); }
+  50% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+  100% { transform: translateX(0); filter: brightness(1); }
+}
+
 .hp-container {
   position: absolute;
   top: 15px;
@@ -429,18 +440,26 @@ function ans(idx,el){
     }
   }else{
     el.classList.add('wrong');
+    g.lives--; g.combo=0;
     let correctAnswer=q[1][q[2]];
-    fb.innerHTML='❌ 正确答案: ' + correctAnswer + ' （继续加油~）';
+    fb.innerHTML='❌ 正确答案: ' + correctAnswer + '<br>💔 超人受伤！-1HP';
     fb.style.color='#e74c3c';
-    g.combo=0;
     
-    // 答错也有攻击动画，但怪兽不掉血
-    document.getElementById('hero').classList.add('attacking');
+    // 怪兽反击动画
+    document.getElementById('monster').style.transform = 'scaleX(-1) translateX(-50px)';
     setTimeout(()=>{
-      document.getElementById('hero').classList.remove('attacking');
-    },500);
+      document.getElementById('hero').classList.add('hurt');
+      setTimeout(()=>{
+        document.getElementById('monster').style.transform = 'scaleX(-1)';
+        document.getElementById('hero').classList.remove('hurt');
+      },300);
+    },200);
     
     upd();
+    if(g.lives<=0){
+      setTimeout(()=>{alert('游戏结束！'); go('menu');},800);
+      return;
+    }
   }
   setTimeout(()=>{g.qi++; if(g.qi>=8){if(g.hp>0){g.beat++; go('levels'); renderLvls();}else{go('levels');} return;} showQ();},1500);
 }
