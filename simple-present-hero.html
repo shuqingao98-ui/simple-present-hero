@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>🦸‍♂️ 超人打怪兽 - 一般现在时</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: rgba(0,0,0,0); }
+body { 
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif; 
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); 
+  min-height: 100vh; 
+  overflow-x: hidden;
+}
+.container { max-width: 480px; margin: 0 auto; }
+
+.header { 
+  background: linear-gradient(90deg, #11998e, #38ef7d); 
+  color: white; 
+  padding: 12px 15px; 
+  display: flex; 
+  justify-content: space-between; 
+  align-items: center;
+  box-shadow: 0 4px 15px rgba(17, 153, 142, 0.4);
+}
+.header h1 { font-size: 16px; }
+.stats { display: flex; gap: 20px; font-size: 15px; }
+
+.page { display: none; padding: 15px; }
+.page.active { display: block; }
+
+.menu-box {
+  background: rgba(255,255,255,0.1);
+  border-radius: 20px;
+  padding: 30px;
+  text-align: center;
+  margin: 20px 0;
+  backdrop-filter: blur(10px);
+}
+.menu-title { font-size: 40px; }
+.menu-subtitle { color: #a0d2ff; font-size: 14px; margin: 15px 0 25px; }
+.btn { 
+  display: block; width: 100%; padding: 18px; margin: 12px 0; 
+  border: none; border-radius: 15px; font-size: 18px; font-weight: bold; 
+  cursor: pointer; transition: all 0.3s;
+}
+.btn-primary { 
+  background: linear-gradient(90deg, #f093fb 0%, #f5576c 100%); 
+  color: white;
+}
+.btn-secondary { 
+  background: rgba(255,255,255,0.15); 
+  color: white; border: 2px solid rgba(255,255,255,0.3);
+}
+
+.battle-arena {
+  background: linear-gradient(180deg, #2d5a27 0%, #1a3a1a 100%);
+  border-radius: 20px;
+  padding: 20px;
+  margin-bottom: 15px;
+  position: relative;
+  min-height: 200px;
+  overflow: hidden;
+}
+.ground {
+  position: absolute;
+  bottom: 20px; left: 20px; right: 20px;
+  height: 40px;
+  background: linear-gradient(90deg, #2e7d32 0%, #4caf50 50%, #2e7d32 100%);
+  border-radius: 10px;
+  opacity: 0.6;
+}
+
+.fighter {
+  position: absolute;
+  bottom: 60px;
+  transition: all 0.3s ease;
+}
+.hero { left: 30px; }
+.monster { right: 30px; }
+
+.hero-avatar {
+  font-size: 70px;
+  filter: drop-shadow(0 5px 15px rgba(102, 126, 234, 0.6));
+  animation: heroIdle 1s ease-in-out infinite;
+}
+.monster-avatar {
+  font-size: 70px;
+  filter: drop-shadow(0 5px 15px rgba(231, 76, 60, 0.6));
+  animation: monsterIdle 1.2s ease-in-out infinite;
+}
+
+@keyframes heroIdle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+@keyframes monsterIdle {
+  0%, 100% { transform: translateY(0) scaleX(-1); }
+  50% { transform: translateY(-3px) scaleX(-1); }
+}
+
+.hero.attacking {
+  animation: heroAttack 0.5s ease-out forwards;
+}
+@keyframes heroAttack {
+  0% { transform: translateX(0); }
+  50% { transform: translateX(100px) scale(1.1); }
+  100% { transform: translateX(0); }
+}
+
+.monster.hurt {
+  animation: monsterHurt 0.4s ease-out;
+}
+@keyframes monsterHurt {
+  0% { transform: scaleX(-1); filter: brightness(1); }
+  50% { transform: scaleX(-1.2); filter: brightness(2) sepia(1) hue-rotate(-50deg); }
+  100% { transform: scaleX(-1); filter: brightness(1); }
+}
+
+.hp-container {
+  position: absolute;
+  top: 15px;
+  width: 120px;
+}
+.hp-hero { left: 15px; }
+.hp-monster { right: 15px; }
+
+.hp-label {
+  font-size: 12px;
+  color: #fff;
+  margin-bottom: 5px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.hp-bar {
+  height: 12px;
+  background: rgba(0,0,0,0.5);
+  border-radius: 6px;
+  overflow: hidden;
+  border: 2px solid rgba(255,255,255,0.2);
+}
+.hp-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.5s ease-out;
+}
+.hero-hp { background: linear-gradient(90deg, #00b894, #00cec9); }
+.monster-hp { background: linear-gradient(90deg, #e74c3c, #ff6b6b); }
+
+.question-box {
+  background: rgba(255,255,255,0.95);
+  border-radius: 20px;
+  padding: 20px;
+  margin-bottom: 15px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+.q-text { 
+  font-size: 18px; font-weight: bold; 
+  margin-bottom: 15px; text-align: center; 
+  line-height: 1.6; color: #2d3436;
+}
+.options { display: grid; grid-template-columns: 1fr; gap: 10px; }
+.opt { 
+  padding: 16px; border: 2px solid #11998e; 
+  background: white; border-radius: 12px; 
+  font-size: 16px; cursor: pointer; text-align: center;
+  transition: all 0.2s;
+}
+.opt.correct { 
+  background: linear-gradient(90deg, #00b894, #00cec9); 
+  border-color: #00b894; color: white;
+}
+.opt.wrong { 
+  background: linear-gradient(90deg, #e74c3c, #ff6b6b); 
+  border-color: #e74c3c; color: white;
+}
+
+.feedback {
+  text-align: center;
+  margin-top: 15px;
+  font-weight: bold;
+  font-size: 15px;
+  min-height: 24px;
+}
+
+.items-bar {
+  display: flex; justify-content: center; gap: 15px;
+  margin: 15px 0;
+}
+.item { 
+  width: 65px; height: 65px; 
+  border: 3px solid rgba(255,255,255,0.3); 
+  background: rgba(255,255,255,0.15); 
+  border-radius: 15px; font-size: 32px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; position: relative;
+}
+.item-count { 
+  position: absolute; bottom: -8px; right: -8px; 
+  background: linear-gradient(135deg, #f093fb, #f5576c); 
+  color: white; width: 26px; height: 26px; 
+  border-radius: 50%; font-size: 14px; 
+  display: flex; align-items: center; justify-content: center;
+}
+
+.levels-grid { 
+  display: grid; grid-template-columns: repeat(3, 1fr); 
+  gap: 12px; margin: 20px 0; 
+}
+.lvl { 
+  aspect-ratio: 1; border: 3px solid rgba(17, 153, 142, 0.5); 
+  background: rgba(255,255,255,0.1); border-radius: 20px; 
+  font-size: 36px; display: flex; 
+  flex-direction: column; align-items: center; justify-content: center;
+  cursor: pointer; color: white;
+}
+.lvl.locked { opacity: 0.3; pointer-events: none; }
+.lvl.current { border-color: #ffd700; background: rgba(255, 215, 0, 0.2); }
+.lvl span { font-size: 11px; margin-top: 5px; }
+
+.shop-item { 
+  display: flex; align-items: center; 
+  background: rgba(255,255,255,0.1); padding: 18px; 
+  border-radius: 15px; margin: 12px 0; cursor: pointer;
+  border: 2px solid rgba(255,255,255,0.1);
+}
+.shop-icon { font-size: 45px; margin-right: 18px; }
+.shop-info { flex: 1; color: white; }
+.shop-name { font-weight: bold; font-size: 16px; }
+.shop-desc { font-size: 13px; opacity: 0.7; margin-top: 3px; }
+.shop-price { color: #ffd700; font-weight: bold; font-size: 18px; }
+
+.victory {
+  text-align: center; padding: 40px 20px;
+}
+.victory-emoji { font-size: 100px; animation: victoryBounce 1s ease-in-out infinite; }
+@keyframes victoryBounce {
+  0%, 100% { transform: scale(1) rotate(-5deg); }
+  50% { transform: scale(1.1) rotate(5deg); }
+}
+.victory-text { color: #ffd700; font-size: 28px; font-weight: bold; margin: 20px 0; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>🦸‍♂️ 超人打怪兽 - 一般现在时</h1>
+    <div class="stats">
+      <span>❤️ <b id="lives">3</b></span>
+      <span>🪙 <b id="coins">0</b></span>
+      <span>🏆 <b id="defeated">0</b></span>
+    </div>
+  </div>
+
+  <div id="p-menu" class="page active">
+    <div class="menu-box">
+      <div class="menu-title">🦸‍♂️ ⚔️ 🦁</div>
+      <div class="menu-subtitle">用一般现在时打败怪兽！<br>be动词 + 动词三单</div>
+      <button class="btn btn-primary" onclick="go('levels')">开始战斗 🎮</button>
+      <button class="btn btn-secondary" onclick="go('shop')">道具商店 🛒</button>
+    </div>
+  </div>
+
+  <div id="p-levels" class="page">
+    <h3 style="text-align:center;color:white;margin-bottom:10px;">选择战场</h3>
+    <div class="levels-grid" id="levels"></div>
+    <button class="btn btn-secondary" onclick="go('menu')" style="margin-top:10px;">返回</button>
+  </div>
+
+  <div id="p-game" class="page">
+    <div class="battle-arena">
+      <div class="ground"></div>
+      <div class="hp-container hp-hero">
+        <div class="hp-label">🦸‍♂️ 超人</div>
+        <div class="hp-bar"><div class="hp-fill hero-hp" id="hero-hp" style="width:100%"></div></div>
+      </div>
+      <div class="hp-container hp-monster">
+        <div class="hp-label" style="justify-content:flex-end;"><span id="m-name">小狮子</span></div>
+        <div class="hp-bar"><div class="hp-fill monster-hp" id="monster-hp" style="width:100%"></div></div>
+      </div>
+      <div class="fighter hero" id="hero"><div class="hero-avatar">🦸‍♂️</div></div>
+      <div class="fighter monster" id="monster"><div class="monster-avatar" id="m-emoji">🦁</div></div>
+    </div>
+    <div class="items-bar">
+      <div class="item" onclick="use('hint')">💡<span class="item-count" id="n-hint">2</span></div>
+      <div class="item" onclick="use('heal')">❤️<span class="item-count" id="n-heal">1</span></div>
+      <div class="item" onclick="use('shield')">🛡️<span class="item-count" id="n-shield">0</span></div>
+    </div>
+    <div class="question-box">
+      <div class="q-text" id="q-text">加载中...</div>
+      <div class="options" id="opts"></div>
+      <div class="feedback" id="fb"></div>
+    </div>
+    <button class="btn btn-secondary" onclick="go('levels')" style="background:rgba(231,76,60,0.8);">逃跑 🏃</button>
+  </div>
+
+  <div id="p-shop" class="page">
+    <h3 style="text-align:center;color:white;margin-bottom:15px;">🛒 装备商店</h3>
+    <div class="shop-item" onclick="buy('hint')">
+      <div class="shop-icon">💡</div>
+      <div class="shop-info"><div class="shop-name">智慧之光</div><div class="shop-desc">显示答案提示</div></div>
+      <div class="shop-price">🪙 30</div>
+    </div>
+    <div class="shop-item" onclick="buy('heal')">
+      <div class="shop-icon">❤️</div>
+      <div class="shop-info"><div class="shop-name">生命药水</div><div class="shop-desc">恢复1点生命</div></div>
+      <div class="shop-price">🪙 50</div>
+    </div>
+    <div class="shop-item" onclick="buy('shield')">
+      <div class="shop-icon">🛡️</div>
+      <div class="shop-info"><div class="shop-name">无敌护盾</div><div class="shop-desc">抵挡一次伤害</div></div>
+      <div class="shop-price">🪙 80</div>
+    </div>
+    <button class="btn btn-secondary" onclick="go('menu')" style="margin-top:10px;">返回</button>
+  </div>
+
+  <div id="p-win" class="page">
+    <div class="victory">
+      <div class="victory-emoji">🏆</div>
+      <div class="victory-text">怪兽被击败了！</div>
+      <button class="btn btn-primary" onclick="next()">下一关 →</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const monsters = [
+  { emoji: '🦁', name: '小狮子', hp: 6 },
+  { emoji: '🐯', name: '小老虎', hp: 6 },
+  { emoji: '🐻', name: '小熊', hp: 8 },
+  { emoji: '🐨', name: '考拉', hp: 8 },
+  { emoji: '🐼', name: '熊猫', hp: 8 },
+  { emoji: '🐸', name: '青蛙', hp: 8 },
+  { emoji: '🦊', name: '狐狸', hp: 10 },
+  { emoji: '🐷', name: '小猪', hp: 10 }
+];
+
+const questions = [
+  [["I ___ a student.",["am","is","are"],0],["He ___ tall.",["am","is","are"],1],["She ___ happy.",["am","is","are"],1],["It ___ a cat.",["am","is","are"],1],["You ___ nice.",["am","is","are"],2],["We ___ friends.",["am","is","are"],2],["They ___ students.",["am","is","are"],2],["My mother ___ kind.",["am","is","are"],1]],
+  [["I ___ sad.",["am not","is not","are not"],0],["He ___ short.",["am not","is not","are not"],1],["She ___ angry.",["am not","is not","are not"],1],["It ___ big.",["am not","is not","are not"],1],["You ___ bad.",["am not","is not","are not"],2],["We ___ tired.",["am not","is not","are not"],2],["They ___ here.",["am not","is not","are not"],2],["The dog ___ small.",["am not","is not","are not"],1]],
+  [["___ you a student?",["Am","Is","Are"],2],["___ he tall?",["Am","Is","Are"],1],["___ she happy?",["Am","Is","Are"],1],["___ it a cat?",["Am","Is","Are"],1],["___ we ready?",["Am","Is","Are"],2],["___ they here?",["Am","Is","Are"],2],["___ I late?",["Am","Is","Are"],0],["___ your father tall?",["Am","Is","Are"],1]],
+  [["He ___ apples.",["like","likes","liking"],1],["She ___ TV.",["watch","watches","watching"],1],["My brother ___ football.",["play","plays","playing"],1],["The cat ___ a lot.",["sleep","sleeps","sleeping"],1],["Tom ___ hard.",["study","studies","studying"],1],["Mary ___ to school.",["go","goes","going"],1],["My father ___ here.",["work","works","working"],1],["The dog ___ loudly.",["bark","barks","barking"],1]],
+  [["I ___ coffee.",["don't like","doesn't like","not like"],0],["You ___ meat.",["don't eat","doesn't eat","not eat"],0],["We ___ games.",["don't play","doesn't play","not play"],0],["They ___ TV.",["don't watch","doesn't watch","not watch"],0],["He ___ fish.",["don't like","doesn't like","not like"],1],["She ___ bread.",["don't eat","doesn't eat","not eat"],1],["My brother ___ cards.",["don't play","doesn't play","not play"],1],["The cat ___ milk.",["don't drink","doesn't drink","not drink"],1]],
+  [["___ you like apples?",["Do","Does","Is"],0],["___ they play football?",["Do","Does","Are"],0],["___ we have time?",["Do","Does","Are"],0],["___ I look OK?",["Do","Does","Am"],0],["___ he like dogs?",["Do","Does","Is"],1],["___ she watch TV?",["Do","Does","Is"],1],["___ your father work here?",["Do","Does","Is"],1],["___ the cat sleep a lot?",["Do","Does","Is"],1]],
+  [["My sister ___ a cat.",["have","has","having"],1],["___ your mother a teacher?",["Do","Does","Is"],2],["They ___ a car.",["don't have","doesn't have","not have"],0],["___ Tom go to school?",["Do","Does","Is"],1],["The students ___ happy.",["am","is","are"],2],["___ it a big house?",["Do","Does","Is"],2],["My parents ___ in Beijing.",["live","lives","living"],0],["___ she have a pen?",["Do","Does","Is"],1]],
+  [["Water ___ at 100℃.",["boil","boils","boiling"],1],["I usually ___ up at 7.",["get","gets","getting"],0],["___ the sun rise in the east?",["Do","Does","Is"],1],["She always ___ teeth.",["brush","brushes","brushing"],1],["We never ___ junk food.",["eat","eats","eating"],0],["___ your brother like music?",["Do","Does","Is"],1],["The earth ___ around sun.",["go","goes","going"],1],["___ they often play games?",["Do","Does","Are"],0]]
+];
+
+let g = { lv:1, qi:0, lives:3, coins:0, beat:0, combo:0, items:{hint:2,heal:1,shield:0}, shield:false, mhp:0, hp:0, qs:[] };
+
+function upd() {
+  document.getElementById('lives').textContent = g.lives;
+  document.getElementById('coins').textContent = g.coins;
+  document.getElementById('defeated').textContent = g.beat;
+  document.getElementById('n-hint').textContent = g.items.hint;
+  document.getElementById('n-heal').textContent = g.items.heal;
+  document.getElementById('n-shield').textContent = g.items.shield;
+  document.getElementById('hero-hp').style.width = (g.lives/3*100)+'%';
+  if(g.mhp>0) document.getElementById('monster-hp').style.width = (g.hp/g.mhp*100)+'%';
+}
+
+function go(p) {
+  document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
+  document.getElementById('p-'+p).classList.add('active');
+  if(p=='levels') { g.lives=3; upd(); renderLvls(); }
+}
+
+function renderLvls() {
+  let h='';
+  for(let i=1;i<=8;i++){
+    let cls=i<=g.beat+1?(i===g.beat+1?'current':''):'locked';
+    h+='<div class="lvl '+cls+'" onclick="if('+i+'<='+g.beat+'+1)start('+i+')">'+monsters[i-1].emoji+'<span>Lv.'+i+'</span></div>';
+  }
+  document.getElementById('levels').innerHTML=h;
+}
+
+function start(lv){
+  g.lv=lv; g.qi=0; g.combo=0; g.shield=false;
+  g.lives=3;
+  g.mhp=monsters[lv-1].hp; g.hp=g.mhp;
+  g.qs=[...questions[lv-1]].sort(()=>Math.random()-0.5);
+  go('game');
+  document.getElementById('m-emoji').textContent=monsters[lv-1].emoji;
+  document.getElementById('m-name').textContent=monsters[lv-1].name;
+  upd(); showQ();
+}
+
+function showQ(){
+  let q=g.qs[g.qi];
+  document.getElementById('q-text').innerHTML=q[0];
+  document.getElementById('fb').textContent='';
+  let h='';
+  q[1].forEach((opt,i)=>{h+='<div class="opt" onclick="ans('+i+',this)">'+opt+'</div>';});
+  document.getElementById('opts').innerHTML=h;
+  window.answering=true;
+}
+
+function ans(idx,el){
+  if(!window.answering) return;
+  window.answering=false;
+  let q=g.qs[g.qi];
+  let fb=document.getElementById('fb');
+  
+  if(idx==q[2]){
+    el.classList.add('correct');
+    g.combo++;
+    let crit=g.combo>=3;
+    let dmg=crit?2:1;
+    g.hp-=dmg;
+    g.coins+=crit?10:5;
+    fb.innerHTML=crit?'💥 暴击! -'+dmg+'HP':'⚔️ 攻击! -'+dmg+'HP';
+    fb.style.color='#00b894';
+    if(crit) g.combo=0;
+    
+    document.getElementById('hero').classList.add('attacking');
+    setTimeout(()=>{
+      document.getElementById('monster').classList.add('hurt');
+      setTimeout(()=>{
+        document.getElementById('hero').classList.remove('attacking');
+        document.getElementById('monster').classList.remove('hurt');
+      },400);
+    },300);
+    
+    upd();
+    if(g.hp<=0){
+      setTimeout(()=>{g.beat++; go('levels'); renderLvls();},800);
+      return;
+    }
+  }else{
+    el.classList.add('wrong');
+    let correctAnswer=q[1][q[2]];
+    fb.innerHTML='❌ 正确答案: ' + correctAnswer + ' （继续加油~）';
+    fb.style.color='#e74c3c';
+    upd();
+  }
+  setTimeout(()=>{g.qi++; if(g.qi>=8){if(g.hp>0){g.beat++; go('levels'); renderLvls();}else{go('levels');} return;} showQ();},1500);
+}
+
+function use(t){
+  if(g.items[t]<=0) return;
+  if(t=='hint'){
+    g.items.hint--;
+    let q=g.qs[g.qi];
+    document.getElementById('fb').innerHTML='💡 提示: 选 "'+q[1][q[2]]+'"';
+    document.getElementById('fb').style.color='#3498db';
+  }else if(t=='heal'){
+    if(g.lives>=3) return alert('生命已满!');
+    g.items.heal--; g.lives++;
+  }else if(t=='shield'){
+    if(g.shield) return;
+    g.items.shield--; g.shield=true;
+    alert('🛡️ 护盾激活!');
+  }
+  upd();
+}
+
+function buy(t){
+  let p={hint:30, heal:50, shield:80};
+  if(g.coins<p[t]) return alert('金币不足!');
+  g.coins-=p[t]; g.items[t]++;
+  upd();
+  alert('购买成功!');
+}
+
+function next(){ renderLvls(); go('levels'); }
+
+upd(); renderLvls();
+</script>
+</body>
+</html>
